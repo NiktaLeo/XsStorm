@@ -1,6 +1,13 @@
 
-import { FormInfo, PageInfo, ScanConfig, ScanResults, Vulnerability, XSSType } from "@/types/scanner";
-import { generateRandomPayload } from "./payloadUtils";
+import { 
+  FormInfo, PageInfo, ScanConfig, ScanResults, Vulnerability, 
+  XSSType, DOMElementInfo, ParameterAnalysisResult
+} from "@/types/scanner";
+import { generateRandomPayload, getPayloadsByContext, detectContext } from "./payloadUtils";
+import { analyzeContext } from "./contextAnalysisUtils";
+import { analyzeParameter, getHighRiskParameters } from "./parameterAnalysisUtils";
+import { findDOMXSSSinks, findDOMXSSSources, testForDOMXSS } from "./domXssUtils";
+import { detectWAF, applyWafBypass } from "./wafBypassUtils";
 
 // Simulate crawling a URL
 export const crawlUrl = async (url: string, config: ScanConfig): Promise<PageInfo[]> => {
@@ -35,26 +42,46 @@ export const crawlUrl = async (url: string, config: ScanConfig): Promise<PageInf
           {
             name: 'search',
             type: 'text',
-            value: ''
+            value: '',
+            parameterType: 'user-input'
           },
           {
             name: 'username',
             type: 'text',
-            value: ''
+            value: '',
+            parameterType: 'identifier'
           },
           {
             name: 'comment',
             type: 'textarea',
-            value: ''
+            value: '',
+            parameterType: 'user-input'
           }
         ]
       });
     }
     
+    // Add DOM elements for DOM XSS detection if enabled
+    const domElements: DOMElementInfo[] = config.domXssDetection ? [
+      {
+        selector: '#search-results',
+        eventHandlers: [],
+        sinkType: 'innerHTML',
+        sourceValue: 'location.search'
+      },
+      {
+        selector: '.user-content',
+        eventHandlers: ['onload'],
+        sinkType: 'innerHTML',
+        sourceValue: 'data from form'
+      }
+    ] : [];
+    
     mockPages.push({
       url: i === 0 ? url : `${baseUrl}/page${i}`,
       crawled: true,
-      forms: mockForms
+      forms: mockForms,
+      domElements: domElements
     });
   }
   
@@ -81,29 +108,110 @@ export const scanForVulnerabilities = async (
   // For demonstration purposes, generate some mock vulnerabilities
   const vulnerabilityTypes: XSSType[] = ['Reflected', 'Stored', 'DOM-Based', 'Blind'];
   
+  // Track parameter analysis if enabled
+  const parameterAnalysisResults: ParameterAnalysisResult[] = [];
+  
+  // Simulate WAF detection
+  const wafDetected = Math.random() > 0.7;
+  
   pages.forEach(page => {
+    // Simulate DOM XSS detection if enabled
+    if (config.domXssDetection && page.domElements) {
+      page.domElements.forEach(element => {
+        // 30% chance of DOM XSS vulnerability
+        if (Math.random() > 0.7) {
+          vulnerabilities.push({
+            id: `vuln-dom-${vulnerabilities.length + 1}`,
+            url: page.url,
+            type: 'DOM-Based',
+            parameter: 'DOM: ' + element.selector,
+            payload: '<img src=x onerror=alert(1)>',
+            context: 'script',
+            status: Math.random() > 0.3 ? 'confirmed' : 'potential',
+            description: `DOM-Based XSS found in ${element.selector} using ${element.sinkType}`,
+            timestamp: Date.now(),
+            severity: 'high',
+            evidence: `Element uses ${element.sinkType} with user-controlled data`,
+            wafBypassed: config.enableWafBypass && wafDetected
+          });
+        }
+      });
+    }
+    
     page.forms.forEach(form => {
-      // Randomly decide if this form has vulnerabilities
-      if (Math.random() > 0.7) {
+      // Simulate parameter analysis if enabled
+      if (config.parameterAnalysis) {
         form.inputs.forEach(input => {
-          // 30% chance of vulnerability per input
-          if (Math.random() > 0.7) {
+          // Simulate analysis results
+          const analysisResult: ParameterAnalysisResult = {
+            name: input.name,
+            type: input.parameterType || 'user-input',
+            reflection: Math.random() > 0.5,
+            locations: ['html', 'attribute', 'script'].slice(0, Math.floor(Math.random() * 3) + 1) as any,
+            context: ['html', 'attribute'].slice(0, Math.floor(Math.random() * 2) + 1) as any,
+            sanitization: Math.random() > 0.7
+          };
+          
+          parameterAnalysisResults.push(analysisResult);
+          
+          // Higher chance of vulnerability for reflected parameters with no sanitization
+          const vulnChance = analysisResult.reflection && !analysisResult.sanitization ? 0.7 : 0.3;
+          
+          // Randomly decide if this form has vulnerabilities
+          if (Math.random() < vulnChance) {
             const payload = generateRandomPayload();
             const vulnType = vulnerabilityTypes[Math.floor(Math.random() * vulnerabilityTypes.length)];
+            let finalPayload = payload.value;
+            
+            // Apply WAF bypass if enabled and WAF detected
+            if (config.enableWafBypass && wafDetected) {
+              const context = analysisResult.context[0] as HTMLContext;
+              const wafBypassPayloads = applyWafBypass(payload.value, context);
+              if (wafBypassPayloads.length > 1) {
+                finalPayload = wafBypassPayloads[1]; // Use first bypass payload
+              }
+            }
             
             vulnerabilities.push({
               id: `vuln-${vulnerabilities.length + 1}`,
               url: page.url,
               type: vulnType,
               parameter: input.name,
-              payload: payload.value,
+              payload: finalPayload,
               context: payload.context[0],
               status: Math.random() > 0.3 ? 'confirmed' : 'potential',
               description: `${vulnType} XSS found in ${input.name} parameter using ${payload.name}`,
-              timestamp: Date.now()
+              timestamp: Date.now(),
+              parameterType: input.parameterType,
+              severity: vulnType === 'Stored' ? 'high' : 'medium',
+              wafBypassed: config.enableWafBypass && wafDetected
             });
           }
         });
+      } else {
+        // Old behavior without parameter analysis
+        // Randomly decide if this form has vulnerabilities
+        if (Math.random() > 0.7) {
+          form.inputs.forEach(input => {
+            // 30% chance of vulnerability per input
+            if (Math.random() > 0.7) {
+              const payload = generateRandomPayload();
+              const vulnType = vulnerabilityTypes[Math.floor(Math.random() * vulnerabilityTypes.length)];
+              
+              vulnerabilities.push({
+                id: `vuln-${vulnerabilities.length + 1}`,
+                url: page.url,
+                type: vulnType,
+                parameter: input.name,
+                payload: payload.value,
+                context: payload.context[0],
+                status: Math.random() > 0.3 ? 'confirmed' : 'potential',
+                description: `${vulnType} XSS found in ${input.name} parameter using ${payload.name}`,
+                timestamp: Date.now()
+              });
+            }
+          });
+        }
       }
     });
   });
@@ -119,6 +227,18 @@ export const startScan = async (config: ScanConfig): Promise<ScanResults> => {
   // 2. Start scanning for vulnerabilities
   const vulnerabilities = await scanForVulnerabilities(pages, config);
   
+  // Calculate number of DOM sinks found
+  const domSinks = config.domXssDetection
+    ? pages.reduce((sum, page) => sum + (page.domElements?.length || 0), 0)
+    : undefined;
+  
+  // Calculate number of parameters analyzed
+  const parametersAnalyzed = config.parameterAnalysis
+    ? pages.reduce((sum, page) => 
+        sum + page.forms.reduce((formSum, form) => 
+          formSum + form.inputs.length, 0), 0) 
+    : undefined;
+  
   // 3. Return results
   return {
     vulnerabilities,
@@ -128,7 +248,11 @@ export const startScan = async (config: ScanConfig): Promise<ScanResults> => {
         formSum + form.inputs.length, 0), 0),
     scanStartTime: Date.now() - 4000, // Simulate that scan started 4s ago
     scanEndTime: Date.now(),
-    status: 'completed'
+    status: 'completed',
+    wafDetected: config.enableWafBypass ? Math.random() > 0.7 : undefined,
+    wafType: config.enableWafBypass && Math.random() > 0.7 ? 'Cloudflare WAF' : undefined,
+    domSinks,
+    parametersAnalyzed: config.parameterAnalysis ? [] : undefined
   };
 };
 
@@ -189,6 +313,8 @@ export const generateReport = (results: ScanResults): string => {
         <p><strong>Scan Date:</strong> ${new Date(results.scanStartTime).toLocaleString()}</p>
         <p><strong>Total Pages Crawled:</strong> ${results.crawledPages}</p>
         <p><strong>Parameters Tested:</strong> ${results.testedParameters}</p>
+        ${results.domSinks !== undefined ? `<p><strong>DOM Sinks Found:</strong> ${results.domSinks}</p>` : ''}
+        ${results.wafDetected ? `<p><strong>WAF Detected:</strong> ${results.wafType || 'Unknown type'}</p>` : ''}
         <p><strong>Vulnerabilities Found:</strong> ${results.vulnerabilities.length}</p>
         <ul>
           ${Object.entries(vulnerabilitiesByType).map(([type, count]) => 
@@ -206,6 +332,7 @@ export const generateReport = (results: ScanResults): string => {
             <th>Context</th>
             <th>Payload</th>
             <th>Status</th>
+            ${results.vulnerabilities.some(v => v.severity) ? '<th>Severity</th>' : ''}
           </tr>
         </thead>
         <tbody>
@@ -217,6 +344,7 @@ export const generateReport = (results: ScanResults): string => {
               <td>${vuln.context}</td>
               <td class="payload">${vuln.payload.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>
               <td class="${vuln.status}">${vuln.status}</td>
+              ${vuln.severity ? `<td>${vuln.severity}</td>` : ''}
             </tr>
           `).join('')}
         </tbody>
@@ -229,6 +357,7 @@ export const generateReport = (results: ScanResults): string => {
         <li>Use framework-specific output encoding for the correct context (HTML, JavaScript, CSS, URL).</li>
         <li>Consider using auto-escaping template systems that encode by default.</li>
         <li>For DOM-based XSS, avoid using unsafe JavaScript methods like innerHTML, document.write(), or eval().</li>
+        ${results.wafDetected ? `<li>Implement deeper WAF rules to prevent the bypass techniques used in this scan.</li>` : ''}
       </ul>
       
       <p><small>Generated by Context-Aware XSS Scanner - ${new Date().toLocaleString()}</small></p>

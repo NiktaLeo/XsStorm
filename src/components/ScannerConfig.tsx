@@ -8,7 +8,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { ScanConfig, ScanStatus } from "@/types/scanner";
 import { 
-  Play, PauseCircle, StopCircle, RotateCcw, Settings2, Lock
+  Play, PauseCircle, StopCircle, RotateCcw, Settings2, Lock, 
+  Bug, Shield, Database, ArrowRight
 } from "lucide-react";
 import { 
   Tooltip,
@@ -16,6 +17,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface ScannerConfigProps {
   startScan: (config: ScanConfig) => void;
@@ -39,6 +46,11 @@ const ScannerConfig: React.FC<ScannerConfigProps> = ({
     followSubdomains: false,
     enableWafBypass: false,
     enableBlindXss: false,
+    // New options
+    domXssDetection: true,
+    parameterAnalysis: true,
+    maxPayloadTests: 15,
+    timeout: 5000,
   });
   
   const handleChange = (key: keyof ScanConfig, value: any) => {
@@ -193,63 +205,210 @@ const ScannerConfig: React.FC<ScannerConfigProps> = ({
           </div>
           
           {advancedOptions && (
-            <div className="space-y-3 border-t pt-3">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="followSubdomains" className="text-sm">Follow Subdomains</Label>
-                  <p className="text-xs text-muted-foreground">Scan pages on subdomains of the target</p>
-                </div>
-                <Switch
-                  id="followSubdomains"
-                  checked={config.followSubdomains}
-                  onCheckedChange={(checked) => handleChange('followSubdomains', checked)}
-                  disabled={isRunning}
-                />
-              </div>
+            <Accordion type="single" collapsible className="w-full border-t pt-3">
+              <AccordionItem value="detection-options" className="border-0">
+                <AccordionTrigger className="py-2 text-sm font-medium">
+                  <div className="flex items-center gap-2">
+                    <Bug className="h-4 w-4" />
+                    Detection Options
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-2 pb-3">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="domXssDetection" className="text-sm">DOM XSS Detection</Label>
+                        <p className="text-xs text-muted-foreground">Find client-side injection vectors</p>
+                      </div>
+                      <Switch
+                        id="domXssDetection"
+                        checked={config.domXssDetection ?? true}
+                        onCheckedChange={(checked) => handleChange('domXssDetection', checked)}
+                        disabled={isRunning}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="parameterAnalysis" className="text-sm">Parameter Analysis</Label>
+                        <p className="text-xs text-muted-foreground">Analyze parameters for contextual testing</p>
+                      </div>
+                      <Switch
+                        id="parameterAnalysis"
+                        checked={config.parameterAnalysis ?? true}
+                        onCheckedChange={(checked) => handleChange('parameterAnalysis', checked)}
+                        disabled={isRunning}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="enableBlindXss" className="text-sm">Blind XSS Detection</Label>
+                        <p className="text-xs text-muted-foreground">Use callbacks to detect blind XSS vulnerabilities</p>
+                      </div>
+                      <Switch
+                        id="enableBlindXss"
+                        checked={config.enableBlindXss}
+                        onCheckedChange={(checked) => handleChange('enableBlindXss', checked)}
+                        disabled={isRunning}
+                      />
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <Label htmlFor="maxPayloadTests" className="text-sm">Max Payloads Per Target</Label>
+                      <RadioGroup
+                        value={(config.maxPayloadTests || 15).toString()}
+                        onValueChange={(value) => handleChange('maxPayloadTests', parseInt(value))}
+                        className="flex space-x-2"
+                        disabled={isRunning}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <RadioGroupItem value="5" id="payloads-5" />
+                          <Label htmlFor="payloads-5" className="text-sm">5</Label>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <RadioGroupItem value="15" id="payloads-15" />
+                          <Label htmlFor="payloads-15" className="text-sm">15</Label>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <RadioGroupItem value="30" id="payloads-30" />
+                          <Label htmlFor="payloads-30" className="text-sm">30</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                    
+                    {config.enableBlindXss && (
+                      <div className="space-y-1">
+                        <Label htmlFor="callbackUrl" className="text-sm">Callback URL</Label>
+                        <Input
+                          id="callbackUrl"
+                          placeholder="https://yourserver.xsshunter.com"
+                          value={config.callbackUrl || ''}
+                          onChange={(e) => handleChange('callbackUrl', e.target.value)}
+                          disabled={isRunning}
+                          className="text-sm"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          URL that will be notified when blind XSS is triggered
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
               
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="enableWafBypass" className="text-sm">WAF Bypass</Label>
-                  <p className="text-xs text-muted-foreground">Use techniques to bypass Web Application Firewalls</p>
-                </div>
-                <Switch
-                  id="enableWafBypass"
-                  checked={config.enableWafBypass}
-                  onCheckedChange={(checked) => handleChange('enableWafBypass', checked)}
-                  disabled={isRunning}
-                />
-              </div>
+              <AccordionItem value="waf-options" className="border-0">
+                <AccordionTrigger className="py-2 text-sm font-medium">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    WAF Bypass Options
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-2 pb-3">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="enableWafBypass" className="text-sm">WAF Bypass Techniques</Label>
+                        <p className="text-xs text-muted-foreground">Use techniques to bypass Web Application Firewalls</p>
+                      </div>
+                      <Switch
+                        id="enableWafBypass"
+                        checked={config.enableWafBypass}
+                        onCheckedChange={(checked) => handleChange('enableWafBypass', checked)}
+                        disabled={isRunning}
+                      />
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <Label htmlFor="timeout" className="text-sm">Request Timeout (ms)</Label>
+                      <RadioGroup
+                        value={(config.timeout || 5000).toString()}
+                        onValueChange={(value) => handleChange('timeout', parseInt(value))}
+                        className="flex space-x-2"
+                        disabled={isRunning}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <RadioGroupItem value="3000" id="timeout-3000" />
+                          <Label htmlFor="timeout-3000" className="text-sm">3000</Label>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <RadioGroupItem value="5000" id="timeout-5000" />
+                          <Label htmlFor="timeout-5000" className="text-sm">5000</Label>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <RadioGroupItem value="10000" id="timeout-10000" />
+                          <Label htmlFor="timeout-10000" className="text-sm">10000</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
               
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="enableBlindXss" className="text-sm">Blind XSS Detection</Label>
-                  <p className="text-xs text-muted-foreground">Use callbacks to detect blind XSS vulnerabilities</p>
-                </div>
-                <Switch
-                  id="enableBlindXss"
-                  checked={config.enableBlindXss}
-                  onCheckedChange={(checked) => handleChange('enableBlindXss', checked)}
-                  disabled={isRunning}
-                />
-              </div>
-              
-              {config.enableBlindXss && (
-                <div className="space-y-1">
-                  <Label htmlFor="callbackUrl" className="text-sm">Callback URL</Label>
-                  <Input
-                    id="callbackUrl"
-                    placeholder="https://yourserver.xsshunter.com"
-                    value={config.callbackUrl || ''}
-                    onChange={(e) => handleChange('callbackUrl', e.target.value)}
-                    disabled={isRunning}
-                    className="text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    URL that will be notified when blind XSS is triggered
-                  </p>
-                </div>
-              )}
-            </div>
+              <AccordionItem value="crawl-options" className="border-0">
+                <AccordionTrigger className="py-2 text-sm font-medium">
+                  <div className="flex items-center gap-2">
+                    <Database className="h-4 w-4" />
+                    Crawling Options
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-2 pb-3">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="followSubdomains" className="text-sm">Follow Subdomains</Label>
+                        <p className="text-xs text-muted-foreground">Scan pages on subdomains of the target</p>
+                      </div>
+                      <Switch
+                        id="followSubdomains"
+                        checked={config.followSubdomains}
+                        onCheckedChange={(checked) => handleChange('followSubdomains', checked)}
+                        disabled={isRunning}
+                      />
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <Label htmlFor="excludePaths" className="text-sm">Exclude Paths (optional)</Label>
+                      <Input
+                        id="excludePaths"
+                        placeholder="logout, admin, profile"
+                        value={config.excludePaths?.join(', ') || ''}
+                        onChange={(e) => handleChange('excludePaths', 
+                          e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                        )}
+                        disabled={isRunning}
+                        className="text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Comma-separated paths to exclude from crawling
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <Label htmlFor="headers" className="text-sm">Custom Headers (optional)</Label>
+                      <Input
+                        id="headers"
+                        placeholder="X-Token: value, X-Custom: value"
+                        value={config.headers ? Object.entries(config.headers).map(([k,v]) => `${k}: ${v}`).join(', ') : ''}
+                        onChange={(e) => {
+                          const headerObj: Record<string, string> = {};
+                          e.target.value.split(',').forEach(pair => {
+                            const [key, value] = pair.split(':').map(s => s.trim());
+                            if (key && value) headerObj[key] = value;
+                          });
+                          handleChange('headers', Object.keys(headerObj).length > 0 ? headerObj : undefined);
+                        }}
+                        disabled={isRunning}
+                        className="text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Custom headers for all requests (format: Name: Value)
+                      </p>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           )}
         </form>
       </CardContent>
