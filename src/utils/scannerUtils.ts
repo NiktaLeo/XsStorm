@@ -1,7 +1,7 @@
 
 import { 
   FormInfo, PageInfo, ScanConfig, ScanResults, Vulnerability, 
-  XSSType, DOMElementInfo, ParameterAnalysisResult
+  XSSType, DOMElementInfo, ParameterAnalysisResult, HTMLContext
 } from "@/types/scanner";
 import { generateRandomPayload, getPayloadsByContext, detectContext } from "./payloadUtils";
 import { analyzeContext } from "./contextAnalysisUtils";

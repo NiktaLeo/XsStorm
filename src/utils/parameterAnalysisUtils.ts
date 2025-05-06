@@ -1,5 +1,4 @@
-
-import { InputField, ParameterAnalysisResult, ParameterType } from "@/types/scanner";
+import { InputField, ParameterAnalysisResult, ParameterType, HTMLContext } from "@/types/scanner";
 import { analyzeContext } from "./contextAnalysisUtils";
 
 // Analyze a parameter to determine its type and properties

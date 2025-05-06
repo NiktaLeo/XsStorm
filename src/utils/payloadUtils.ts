@@ -1,7 +1,6 @@
-
 import { HTMLContext, Payload, EncodingType } from "@/types/scanner";
 import { analyzeContext } from "./contextAnalysisUtils";
-import { applyWafBypass } from "./wafBypassUtils";
+import * as wafBypassUtils from "./wafBypassUtils";
 
 // Enhanced comprehensive payload library
 export const getDefaultPayloads = (): Payload[] => [
@@ -454,8 +453,7 @@ export const applyWafBypass = (
   payload: string, 
   context: HTMLContext = 'html'
 ): string[] => {
-  // Use the enhanced WAF bypass utility
-  return require('./wafBypassUtils').applyWafBypass(payload, context);
+  return wafBypassUtils.applyWafBypass(payload, context);
 };
 
 // Enhanced context detection with more advanced pattern matching

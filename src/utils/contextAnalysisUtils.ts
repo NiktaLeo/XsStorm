@@ -1,5 +1,4 @@
-
-import { ContextAnalysisResult, FilterInfo, HTMLContext, EncodingType } from "@/types/scanner";
+import { ContextAnalysisResult, FilterInfo, HTMLContext, EncodingType, DOMSinkType, Payload } from "@/types/scanner";
 
 // Enhanced context detection with deeper analysis
 export const analyzeContext = (html: string, injectionPoint: string): ContextAnalysisResult => {
@@ -84,7 +83,7 @@ const detectPrimaryContext = (before: string, after: string): HTMLContext => {
   }
   
   // Check for tag name context
-  if (/<\/?[a-zA-Z0-9-]*$/.test(before)) {
+  if (/\/?[a-zA-Z0-9-]*$/.test(before)) {
     return 'tag-name';
   }
   
