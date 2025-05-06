@@ -63,15 +63,15 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Security-themed colors
+				// Security-themed colors - updated to be more green
 				security: {
-					DEFAULT: '#2a4365', // dark blue
-					light: '#3182ce', // blue
-					dark: '#1a365d', // very dark blue
-					accent: '#0bc5ea', // teal accent
-					warning: '#f6ad55', // orange
-					danger: '#f56565', // red
-					success: '#68d391', // green
+					DEFAULT: '#1a3a2e', // dark green
+					light: '#2d9d5c', // green
+					dark: '#0f291f', // very dark green
+					accent: '#4ade80', // bright green accent
+					warning: '#f6ad55', // kept orange for warnings
+					danger: '#f56565', // kept red for dangers
+					success: '#68d391', // kept green for success
 				},
 			},
 			borderRadius: {
@@ -103,6 +103,11 @@ export default {
 				'scanning': {
 					'0%': { width: '0%' },
 					'100%': { width: '100%' },
+				},
+				'matrix-drop': {
+					'0%': { transform: 'translateY(-100%)', opacity: '0' },
+					'10%': { opacity: '1' },
+					'100%': { transform: 'translateY(100vh)', opacity: '0.3' },
 				}
 			},
 			animation: {
@@ -110,6 +115,7 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'pulse-slow': 'pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
 				'scanning': 'scanning 3s ease-in-out infinite',
+				'matrix-drop': 'matrix-drop 8s linear infinite',
 			}
 		}
 	},

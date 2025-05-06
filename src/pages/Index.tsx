@@ -2,7 +2,7 @@
 import React from 'react';
 import Dashboard from '@/components/Dashboard';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, ShieldAlert, AlertCircle } from 'lucide-react';
+import { ShieldAlert, AlertCircle, AlertTriangle } from 'lucide-react';
 
 const Index = () => {
   return (
@@ -11,8 +11,7 @@ const Index = () => {
         <div className="container flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShieldAlert className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold">XSS Pro Scanner</h1>
-            <Badge variant="outline" className="ml-2">BETA</Badge>
+            <h1 className="text-xl font-bold">XsStorm</h1>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="gap-1 flex items-center">
@@ -41,7 +40,7 @@ const Index = () => {
       <footer className="border-t border-border py-4 mt-8">
         <div className="container flex justify-between items-center text-sm text-muted-foreground">
           <div>
-            &copy; {new Date().getFullYear()} XSS Pro Scanner
+            &copy; {new Date().getFullYear()} XsStorm
           </div>
           <div className="text-xs">
             Built for security professionals and penetration testers

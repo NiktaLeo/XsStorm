@@ -5,85 +5,85 @@
 
 @layer base {
   :root {
-    --background: 210 33% 14%; /* Dark blue background */
-    --foreground: 210 20% 98%;
+    --background: 140 15% 15%; /* Dark greyish-green background */
+    --foreground: 120 30% 90%;
 
-    --card: 210 33% 18%;
-    --card-foreground: 210 20% 98%;
+    --card: 140 15% 18%;
+    --card-foreground: 120 30% 90%;
 
-    --popover: 210 33% 18%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 140 15% 18%;
+    --popover-foreground: 120 30% 90%;
 
-    --primary: 192 85% 48%; /* Teal primary color */
-    --primary-foreground: 210 20% 98%;
+    --primary: 120 70% 45%; /* Matrix green primary color */
+    --primary-foreground: 120 30% 10%;
 
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 210 20% 98%;
+    --secondary: 140 20% 20%;
+    --secondary-foreground: 120 30% 90%;
 
-    --muted: 215 25% 27%;
-    --muted-foreground: 210 20% 80%;
+    --muted: 140 15% 25%;
+    --muted-foreground: 120 30% 80%;
 
-    --accent: 192 85% 48%;
-    --accent-foreground: 210 20% 98%;
+    --accent: 120 70% 45%;
+    --accent-foreground: 120 30% 10%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive-foreground: 120 30% 90%;
 
-    --border: 215 25% 27%;
-    --input: 215 25% 27%;
-    --ring: 192 85% 48%;
+    --border: 140 20% 25%;
+    --input: 140 20% 25%;
+    --ring: 120 70% 45%;
 
     --radius: 0.5rem;
 
-    /* Sidebar styles - keeping dark theme */
-    --sidebar-background: 210 33% 12%;
-    --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 192 85% 48%;
-    --sidebar-primary-foreground: 210 20% 98%;
-    --sidebar-accent: 210 33% 16%;
-    --sidebar-accent-foreground: 210 20% 98%;
-    --sidebar-border: 210 33% 16%;
-    --sidebar-ring: 192 85% 48%;
+    /* Sidebar styles - keeping dark theme but with green tint */
+    --sidebar-background: 140 15% 12%;
+    --sidebar-foreground: 120 30% 90%;
+    --sidebar-primary: 120 70% 45%;
+    --sidebar-primary-foreground: 120 30% 10%;
+    --sidebar-accent: 140 15% 18%;
+    --sidebar-accent-foreground: 120 30% 90%;
+    --sidebar-border: 140 15% 18%;
+    --sidebar-ring: 120 70% 45%;
   }
 
   /* We're using dark theme by default for this security app */
   .dark {
-    --background: 210 33% 14%; 
-    --foreground: 210 20% 98%;
+    --background: 140 15% 15%; 
+    --foreground: 120 30% 90%;
 
-    --card: 210 33% 18%;
-    --card-foreground: 210 20% 98%;
+    --card: 140 15% 18%;
+    --card-foreground: 120 30% 90%;
 
-    --popover: 210 33% 18%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 140 15% 18%;
+    --popover-foreground: 120 30% 90%;
 
-    --primary: 192 85% 48%;
-    --primary-foreground: 210 20% 98%;
+    --primary: 120 70% 45%;
+    --primary-foreground: 120 30% 10%;
 
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 210 20% 98%;
+    --secondary: 140 20% 20%;
+    --secondary-foreground: 120 30% 90%;
 
-    --muted: 215 25% 27%;
-    --muted-foreground: 210 20% 80%;
+    --muted: 140 15% 25%;
+    --muted-foreground: 120 30% 80%;
 
-    --accent: 192 85% 48%;
-    --accent-foreground: 210 20% 98%;
+    --accent: 120 70% 45%;
+    --accent-foreground: 120 30% 10%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive-foreground: 120 30% 90%;
 
-    --border: 215 25% 27%;
-    --input: 215 25% 27%;
-    --ring: 192 85% 48%;
+    --border: 140 20% 25%;
+    --input: 140 20% 25%;
+    --ring: 120 70% 45%;
 
-    --sidebar-background: 210 33% 12%;
-    --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 192 85% 48%;
-    --sidebar-primary-foreground: 210 20% 98%;
-    --sidebar-accent: 210 33% 16%;
-    --sidebar-accent-foreground: 210 20% 98%;
-    --sidebar-border: 210 33% 16%;
-    --sidebar-ring: 192 85% 48%;
+    --sidebar-background: 140 15% 12%;
+    --sidebar-foreground: 120 30% 90%;
+    --sidebar-primary: 120 70% 45%;
+    --sidebar-primary-foreground: 120 30% 10%;
+    --sidebar-accent: 140 15% 18%;
+    --sidebar-accent-foreground: 120 30% 90%;
+    --sidebar-border: 140 15% 18%;
+    --sidebar-ring: 120 70% 45%;
   }
 }
 
@@ -118,4 +118,22 @@
   .scanning-bar {
     @apply h-1 bg-primary rounded-full animate-scanning;
   }
+
+  /* Matrix-like effect - digital rain animation */
+  .matrix-text {
+    @apply text-primary font-mono opacity-80;
+    text-shadow: 0 0 5px rgba(75, 223, 100, 0.5);
+  }
 }
+
+/* Matrix-like animations */
+@keyframes matrix-fade {
+  0% { opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+
+.matrix-glow {
+  animation: matrix-fade 2s infinite;
+}
+
