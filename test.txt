@@ -1,0 +1,1 @@
+[IO.File]::WriteAllBytes("C:\Users\test\procexp.exe",[Convert]::FromBase64String((Get-Content "C:\Users\test\procexp.txt" -Raw)))
